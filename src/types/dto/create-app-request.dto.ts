@@ -12,7 +12,7 @@ export interface CreateAppRequestDto {
   name: string;
   build_cmd?: string;
   envs?: Record<string, string>;
-  is_auto_deploy?: boolean;
+  is_auto_deploy?: false;
   comment?: string;
   index_dir?: string; // Only for frontend apps
   run_cmd?: string; // Only for backend apps

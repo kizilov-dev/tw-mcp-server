@@ -21,3 +21,7 @@ export const getVersion = (): string => {
 export const createToolResponse = (text: string) => ({
   content: [{ type: "text" as const, text }],
 });
+
+export const createResourceResponse = (uri: string, text: string) => ({
+  contents: [{ uri, text, mimeType: "application/json" }],
+});

@@ -1,15 +1,11 @@
-import { z } from "zod";
-import { appsApiClient } from "../api";
+
 import { ToolNames } from "../types/tool-names.enum";
 import { createToolResponse } from "../utils";
-
-const inputSchema = {};
+import { getAllowedPresetsAction } from "../actions/get-allowed-presets.action";
 
 const handler = async () => {
   try {
-    console.log("📋 Получение списка доступных пресетов...");
-
-    const presets = await appsApiClient.getAllowedPresets();
+    const presets = await getAllowedPresetsAction();
 
     const responseMessage = `📋 Доступные пресеты для создания приложения:
 
@@ -44,19 +40,13 @@ ${
 
     return createToolResponse(responseMessage);
   } catch (error) {
-    if (error instanceof z.ZodError) {
-      const validationErrors = error.errors
-        .map((e) => `• ${e.path.join(".")}: ${e.message}`)
-        .join("\n");
-
-      throw new Error(`❌ Ошибка валидации данных:\n${validationErrors}`);
-    }
-
     if (error instanceof Error) {
-      throw new Error(`❌ Ошибка при получении пресетов: ${error.message}`);
+      return createToolResponse(
+        `❌ Ошибка при получении пресетов. Причина: ${error.message}`
+      );
     }
 
-    throw new Error(`❌ Неизвестная ошибка: ${String(error)}`);
+    return createToolResponse(`❌ Неизвестная ошибка при получении пресетов.`);
   }
 };
 
@@ -64,6 +54,6 @@ export const getAllowedPresetsTool = {
   name: ToolNames.GET_ALLOWED_PRESETS,
   title: "Получение доступных пресетов для создания приложения",
   description: "Получает список доступных пресетов для создания приложения",
-  inputSchema,
+  inputSchema: {},
   handler,
 };

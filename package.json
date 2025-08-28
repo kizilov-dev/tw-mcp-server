@@ -5,13 +5,12 @@
   "scripts": {
     "build": "tsdown && chmod 755 dist/index.js",
     "dev": "tsdown --watch --on-success \"chmod 755 dist/index.js\"",
-    "start": "node dist/index.js",
-    "inspect": "set  DANGEROUSLY_OMIT_AUTH=true && npx @modelcontextprotocol/inspector npm run start",
+    "start": "node -r dotenv/config dist/index.js",
+    "start:env": "env $(cat .env | grep \"^[^#;]\" | xargs) node dist/index.js",
+    "set-env": "export $(cat .env | grep \"^[^#;]\" |xargs)",
+    "inspect": "export DANGEROUSLY_OMIT_AUTH=true && npx @modelcontextprotocol/inspector npm run start",
     "clean": "rm -rf dist",
-    "type-check": "tsc --noEmit",
-    "lint": "biome check .",
-    "lint:fix": "biome check --write .",
-    "format": "biome format --write ."
+    "type-check": "tsc --noEmit"
   },
   "keywords": [
     "mcp",
@@ -32,6 +31,7 @@
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.17.4",
     "axios": "^1.11.0",
+    "dotenv": "^16.4.5",
     "zod": "^3.25.76"
   },
   "devDependencies": {

@@ -2,6 +2,7 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import * as tools from "./tools";
+import * as resources from "./resources";
 import { getVersion } from "./utils";
 
 const startServer = async () => {
@@ -13,11 +14,13 @@ const startServer = async () => {
     },
     {
       capabilities: {
-        logging: {},
+        tools: {},
+        resources: {},
       },
     }
   );
 
+  // Регистрируем tools
   Object.values(tools).forEach((tool) => {
     server.registerTool(
       tool.name,
@@ -27,6 +30,19 @@ const startServer = async () => {
         inputSchema: tool.inputSchema,
       },
       tool.handler
+    );
+  });
+
+  // Регистрируем resources
+  Object.values(resources).forEach((resource) => {
+    server.registerResource(
+      resource.name,
+      resource.uri,
+      {
+        title: resource.title,
+        description: resource.description,
+      },
+      resource.handler
     );
   });
 
