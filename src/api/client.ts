@@ -9,7 +9,7 @@ export class BaseApiClient {
   private axiosInstance: AxiosInstance;
 
   constructor() {
-    this.token = "eyJhbGciOiJSUzUxMiIsInR5cCI6IkpXVCIsImtpZCI6IjFrYnhacFJNQGJSI0tSbE1xS1lqIn0.eyJ1c2VyIjoidGk1NjI0NiIsInR5cGUiOiJhcGlfa2V5IiwiYXBpX2tleV9pZCI6ImI0MTIxMThmLWU3MjgtNGM5Ny04NjY2LTcyNTRlZjU5Y2QyYiIsImlhdCI6MTc1NTU4OTg3Mn0.wsaRlnphOy98QDgp3VvgpvmSczL2baru3XJIRwVpol6TRlYdHX6BrZ-zhz6DGnoZhYBL3CNoHi_U1cPQ5vS2dXKBMg0Oq58HXvWUoTIr8tE5mVHy1w8BIy3Rtm6b1aZ5_UjFdsLEU8EotCvLGf6fmGub4D8tbXPCjceuaSL2VemkFZtboq1-gGpgqDzz0gYoZ65eyNKyfK71kWEslYQhwbHeiuOGEky6mAWlsUr_iBpwY5DCQUxeYnE84T3Iawj9nBDx7PsVyGCrx5I2iNgrhnYMdIDIPDhEaMEBxznYRwR44poMMmOg9lU_RgUgzknVNWRt7j2gQlrPiVuMf2tUkyxbULZUlvcSWSMf0Xpq5YlQyg5GskRwO_cVomfBFE6OUSTyoRDoFc6CVolk0YhiOwgnfcrWDfJFrtEukisKopt1aodm2GNaB4slykLwL8KHn70JZ3MLLSzRtSwrRCSoPmvDpgXo5v7XkFj4ILmGYW4-r1vr7NRoDTZ6N7JiWXl6";
+    this.token = "";
     this.baseUrl = "https://timeweb.cloud";
 
     // Создаем экземпляр axios с базовой конфигурацией

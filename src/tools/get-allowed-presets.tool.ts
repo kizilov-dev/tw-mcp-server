@@ -21,9 +21,9 @@ ${
         `ID: ${preset.id} | ${preset.description_short}
      💰 Цена: ${preset.price}₽/мес
      🖥️ CPU: ${preset.cpu}
-     💾 RAM: ${preset.ram}GB
-     💿 Диск: ${preset.disk}GB
-     ⚡ Частота: ${preset.cpu_frequency}`
+     💾 RAM: ${preset.ram / 1024}Gb
+     💿 Диск: ${preset.disk / 1024}Gb
+     ⚡ Частота: ${preset.cpu_frequency}GHz`
     )
     .join("\n\n") || "  Нет доступных backend пресетов"
 }
@@ -35,7 +35,7 @@ ${
       (preset) =>
         `ID: ${preset.id} | ${preset.description_short}
      💰 Цена: ${preset.price}₽/мес
-     💿 Диск: ${preset.disk}GB`
+     💿 Диск: ${preset.disk}Mb`
     )
     .join("\n\n") || "  Нет доступных frontend пресетов"
 }
