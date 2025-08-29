@@ -4,7 +4,9 @@ export interface CreateAppResponseDto {
     name: string;
     ip: string;
     type: string;
-    domains: string[];
+    domains: {
+      fqdn: string;
+    }[];
     framework: string;
     branch: string;
     comment: string;

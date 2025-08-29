@@ -6,6 +6,7 @@ import { AddVcsProviderRequestDto } from "../types/dto/add-vcs-provider-request.
 import { GetVcsProvidersResponseDto } from "../types/dto/get-vcs-providers-response.dto";
 import { GetVcsProviderRepositoriesResponseDto } from "../types/dto/get-vcs-provider-repositories-response.dto";
 import { AddVcsProviderResponseDto } from "../types/dto/add-vcs-provider-response.dto";
+import { GetDeploySettingsResponseDto } from "../types/dto/get-deploy-settings-response.dto";
 
 /**
  * API клиент для работы с приложениями Timeweb Cloud
@@ -52,6 +53,15 @@ export class AppsApiClient extends BaseApiClient {
   ): Promise<GetVcsProviderRepositoriesResponseDto> {
     return this.get<GetVcsProviderRepositoriesResponseDto>(
       `/api/v1/vcs-provider/${providerId}`
+    );
+  }
+
+  /**
+   * Получить настройки деплоя для приложений
+   */
+  async getDeploySettings(): Promise<GetDeploySettingsResponseDto> {
+    return this.get<GetDeploySettingsResponseDto>(
+      "/api/v1/deploy-settings/apps"
     );
   }
 }
