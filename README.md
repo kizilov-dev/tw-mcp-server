@@ -29,7 +29,7 @@ npm install
 3. Настройте переменные окружения:
 
 ```bash
-# export TIMEWEB_TOKEN="your-timeweb-token" 
+# export TIMEWEB_TOKEN="your-timeweb-token"
 ```
 
 ## Разработка

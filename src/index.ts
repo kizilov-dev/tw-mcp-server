@@ -28,6 +28,14 @@ const startServer = async () => {
         title: tool.title,
         description: tool.description,
         inputSchema: tool.inputSchema,
+        // outputSchema: tool.outputSchema,
+        annotations: {
+          title: tool.title,
+          readOnlyHint: false,
+          destructiveHint: false,
+          idempotentHint: false,
+          openWorldHint: true,
+        },
       },
       tool.handler
     );

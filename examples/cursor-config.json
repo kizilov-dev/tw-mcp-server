@@ -1,0 +1,10 @@
+{
+  "mcpServers": {
+    "timeweb-mcp-server": {
+      "command": "timeweb-mcp-server",
+      "env": {
+        "TIMEWEB_TOKEN": "your-timeweb-api-token-here"
+      }
+    }
+  }
+}
