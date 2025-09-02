@@ -1,5 +1,7 @@
+import { VcsProviders } from "./vcs-providers.enum";
+
 export interface VcsProvider {
-  provider: string;
+  provider: VcsProviders;
   provider_id: string;
   login: string;
 }

@@ -3,6 +3,7 @@ import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import * as tools from "./tools";
 import * as resources from "./resources";
+import * as prompts from "./prompts";
 import { getVersion } from "./utils";
 
 const startServer = async () => {
@@ -16,6 +17,7 @@ const startServer = async () => {
       capabilities: {
         tools: {},
         resources: {},
+        prompts: {},
       },
     }
   );
@@ -52,6 +54,11 @@ const startServer = async () => {
       },
       resource.handler
     );
+  });
+
+  // Регистрируем prompts
+  Object.values(prompts).forEach((prompt) => {
+    server.registerPrompt(prompt.name, prompt.config, prompt.handler);
   });
 
   const transport = new StdioServerTransport();

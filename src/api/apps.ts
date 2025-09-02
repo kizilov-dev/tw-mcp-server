@@ -32,10 +32,7 @@ export class AppsApiClient extends BaseApiClient {
   async addVcsProvider(
     params: AddVcsProviderRequestDto
   ): Promise<AddVcsProviderResponseDto> {
-    return this.post<AddVcsProviderResponseDto>("/api/v1/vcs-provider", {
-      ...params,
-      provider_type: "git",
-    });
+    return this.post<AddVcsProviderResponseDto>("/api/v1/vcs-provider", params);
   }
 
   /**

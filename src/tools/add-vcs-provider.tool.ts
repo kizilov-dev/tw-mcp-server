@@ -3,6 +3,7 @@ import { createToolResponse } from "../utils";
 import { AddVcsProviderRequestDto } from "../types/dto/add-vcs-provider-request.dto";
 import { addVcsProviderAction } from "../actions/add-vcs-provider.action";
 import { ToolNames } from "../types/tool-names.enum";
+import { VcsProviders } from "../types/vcs-providers.enum";
 
 const inputSchema = {
   url: z
@@ -34,8 +35,8 @@ const inputSchema = {
         • Если ошибка авторизации - ПЕРЕЗАПРОСИТЬ с новыми данными`,
     })
     .optional(),
-  provider_type: z.enum(["git"], {
-    description: "Тип VCS провайдера. Всегда git",
+  provider_type: z.nativeEnum(VcsProviders, {
+    description: "Тип VCS провайдера",
   }),
 };
 
@@ -53,7 +54,22 @@ const outputSchema = {
 
 const handler = async (params: AddVcsProviderRequestDto) => {
   try {
-    await addVcsProviderAction(params);
+
+    if (!params.provider_type) {
+      return createToolResponse(
+        `❌ Не указан тип VCS провайдера!`
+      );
+    }
+
+    if (params.provider_type === VcsProviders.GIT) {
+      await addVcsProviderAction(params);
+    } else {
+      // TODO: Добавить поддержку других провайдеров
+      return createToolResponse(
+        `❌ Не поддерживается тип VCS провайдера: используйте git для подключения по ссылке`
+      );
+    }
+
 
     return createToolResponse(`✅ VCS провайдер успешно добавлен!
 
@@ -131,20 +147,7 @@ ${params.password ? `• Пароль/токен: ***` : ""}
 export const addVcsProviderTool = {
   name: ToolNames.ADD_VCS_PROVIDER,
   title: "Добавление VCS провайдера",
-  description: `Добавляет новый VCS провайдер для подключения Git репозиториев к Timeweb Cloud.
-
-    🔐 АВТОРИЗАЦИЯ ДЛЯ ПРИВАТНЫХ РЕПОЗИТОРИЕВ:
-    • Требуется логин и Personal Access Token
-    • Токен должен иметь права repo/read/write
-    • При ошибке авторизации - ПЕРЕЗАПРОС данных у пользователя
-
-    ⚠️ ОБРАБОТКА ОШИБОК:
-    • Авторизации (401/403) - запрос новых credentials
-    • Репозиторий не найден (404) - проверка URL
-
-    🚀 РЕЗУЛЬТАТ:
-    • VCS провайдер готов для создания приложений
-    • Доступен для tool ${ToolNames.CREATE_TIMEWEB_APP}`,
+  description: `Добавляет новый VCS провайдер для подключения Git репозиториев к Timeweb Cloud`,
   inputSchema,
   outputSchema,
   handler,

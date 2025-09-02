@@ -36,7 +36,7 @@ const handler = async () => {
         (provider) =>
           `🔹 ${provider.provider} провайдер
         ID: ${provider.provider_id}
-        Login: ${provider.login}`
+        Name: ${provider.login}`
       )
       .join("\n\n");
 

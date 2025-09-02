@@ -1,5 +1,7 @@
+import { VcsProviders } from "../vcs-providers.enum";
+
 export interface AddVcsProviderRequestDto {
-  provider_type: "git";
+  provider_type: VcsProviders;
   url: string;
   login?: string;
   password?: string;

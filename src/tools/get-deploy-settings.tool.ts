@@ -29,10 +29,9 @@ const handler = async () => {
 ${deploySettings
   .map(
     (setting) => `🔹 ${setting.framework}:
-     🏗️  Сборка: ${setting.build_cmd}
-     📁 Index директория: ${setting.index_dir}${
-      setting.run_cmd ? `\n     🚀 Запуск: ${setting.run_cmd}` : ""
-    }`
+     build_cmd: ${setting.build_cmd ?? ""}
+     index_dir: ${setting.index_dir ?? ""}
+     run_cmd: ${setting.run_cmd ?? ""}`
   )
   .join("\n\n")}
 
