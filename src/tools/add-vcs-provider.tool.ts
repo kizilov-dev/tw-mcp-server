@@ -52,7 +52,6 @@ const handler = async (params: AddVcsProviderRequestDto) => {
     if (params.provider_type === VcsProviders.GIT) {
       await addVcsProviderAction(params);
     } else {
-      // TODO: Добавить поддержку других провайдеров
       return createToolResponse(
         `❌ Не поддерживается тип VCS провайдера: используйте git для подключения по ссылке`
       );
@@ -72,7 +71,6 @@ ${params.password ? `• Пароль/токен: ***` : ""}
     if (error instanceof Error) {
       const errorMessage = error.message.toLowerCase();
 
-      // Обработка ошибок авторизации
       if (
         errorMessage.includes("unauthorized") ||
         errorMessage.includes("403") ||
@@ -93,7 +91,6 @@ ${params.password ? `• Пароль/токен: ***` : ""}
         );
       }
 
-      // Обработка ошибок репозитория
       if (
         errorMessage.includes("repository not found") ||
         errorMessage.includes("404") ||
@@ -113,7 +110,6 @@ ${params.password ? `• Пароль/токен: ***` : ""}
         );
       }
 
-      // Общая ошибка
       return createToolResponse(
         `❌ Ошибка при добавлении VCS провайдера!
 

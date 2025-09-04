@@ -4,8 +4,6 @@ import { ToolNames } from "../types/tool-names.enum";
 
 const handler = async () => {
   try {
-    console.log("📋 Получение списка VCS провайдеров...");
-
     const providers = await getVcsProvidersAction();
 
     if (!providers || providers.length === 0) {

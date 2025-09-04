@@ -14,7 +14,6 @@ const handler = async (params: { repository_url: string }) => {
     const providers = await getVcsProvidersAction();
 
     const provider = providers?.find((provider) =>
-      // Решулярка удаляет первый сегмент URL (логин пользователя в Timeweb Cloud) и оставляет только имя репозитория
       params.repository_url.includes(provider.login.replace(/^[^\/]+\//, ''))
     );
 
