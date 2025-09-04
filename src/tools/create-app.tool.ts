@@ -9,6 +9,9 @@ import { createToolResponse } from "../utils";
 import { createAppAction } from "../actions/create-app.action";
 import { CreateAppParams } from "../types/create-app-params.type";
 import { getVcsProvidersAction } from "../actions/get-vcs-providers.action";
+import { getAllowedPresetsAction } from "../actions/get-allowed-presets.action";
+import { ResourceNames } from "../types/resource-names.enum";
+import { getDeploySettingsAction } from "../actions/get-deploy-settings.action";
 
 const frameworks = [
   ...Object.values(FrameworksFrontend),
@@ -26,14 +29,16 @@ const inputSchema = {
 
   provider_id: z
     .string({
-      description: `ID подключенного VCS провайдера в timeweb cloud. АВТОМАТИЧЕСКИ запросить с помощью tool ${ToolNames.GET_VCS_PROVIDERS} подключенные провайдеры, и выбрать подходящий по названию репозитория. Если нет подходящих, создать новый репозиторий автоматически используя tool ${ToolNames.ADD_VCS_PROVIDER}.`,
+      description: `ID подключенного VCS провайдера в timeweb cloud. АВТОМАТИЧЕСКИ запросить с помощью tool ${ToolNames.GET_VCS_PROVIDER_BY_REPOSITORY_URL} подключенные провайдеры, и выбрать подходящий по названию репозитория. Если нет подходящих, создать новый репозиторий автоматически используя tool ${ToolNames.ADD_VCS_PROVIDER}.`,
     })
+    .uuid("ID провайдера должен быть валидным UUID")
     .describe("ОБЯЗАТЕЛЬНОЕ ПОЛЕ - ID VCS провайдера"),
 
   repository_id: z
     .string({
       description: `ID репозитория в timeweb cloud. АВТОМАТИЧЕСКИ запросить с помощью tool ${ToolNames.GET_VCS_PROVIDER_REPOSITORIES} подключенные репозитории с использованием provider_id, и выбрать подходящий по названию. Если нет подходящих, НЕ создавать новый репозиторий автоматически`,
     })
+    .uuid("ID репозитория должен быть валидным UUID")
     .describe("ОБЯЗАТЕЛЬНОЕ ПОЛЕ - ID репозитория"),
 
   repository_url: z
@@ -46,7 +51,7 @@ const inputSchema = {
 
   preset_id: z
     .number({
-      description: `ID пресета приложения в timeweb cloud. АВТОМАТИЧЕСКИ запросить с помощью tool ${ToolNames.GET_ALLOWED_PRESETS} доступные пресеты, и выбрать первый подходящий для определенного типа приложения и фреймворка`,
+      description: `ID пресета приложения в timeweb cloud. АВТОМАТИЧЕСКИ запросить с помощью ресурса ${ResourceNames.ALLOWED_PRESETS} доступные пресеты, и выбрать первый подходящий для определенного типа приложения и фреймворка`,
     })
     .int("ID пресета должен быть целым числом")
     .positive("ID пресета должен быть положительным числом")
@@ -108,7 +113,7 @@ const inputSchema = {
 
   build_cmd: z
     .string({
-      description: `Команда для сборки. АВТОМАТИЧЕСКИ определить в зависимости от фреймворка и структуры проекта. МОЖНО использовать tool ${ToolNames.GET_DEPLOY_SETTINGS} для получения настроек по умолчанию для конкретного фреймворка. ОБЯЗАТЕЛЬНО для всех приложений`,
+      description: `Команда для сборки. АВТОМАТИЧЕСКИ определить в зависимости от фреймворка и структуры проекта. МОЖНО использовать ресурс ${ResourceNames.DEPLOY_SETTINGS} для получения настроек по умолчанию для конкретного фреймворка. ОБЯЗАТЕЛЬНО для всех приложений`,
     })
     .describe("ОБЯЗАТЕЛЬНОЕ ПОЛЕ - команда сборки"),
 
@@ -126,7 +131,6 @@ const inputSchema = {
     .string({
       description: "Комментарий к приложению",
     })
-    .min(1, "Комментарий не может быть пустым")
     .max(200, "Комментарий слишком длинный")
     .refine((comment) => comment.trim().length > 0, {
       message: "Комментарий не может состоять только из пробелов",
@@ -136,15 +140,14 @@ const inputSchema = {
 
   index_dir: z
     .string({
-      description: `Директория с index файлом (ТОЛЬКО для frontend приложений). Использовать tool ${ToolNames.GET_DEPLOY_SETTINGS} для получения настроек по умолчанию для конкретного фреймворка.`,
+      description: `Директория с index файлом (ТОЛЬКО для frontend приложений). Использовать ресурс ${ResourceNames.DEPLOY_SETTINGS} для получения настроек по умолчанию для конкретного фреймворка.`,
     })
-    .describe(
-      "ОБЯЗАТЕЛЬНОЕ ПОЛЕ ТОЛЬКО для frontend приложений - директория с index файлом"
-    ),
+    .describe("ТОЛЬКО для frontend приложений - директория с index файлом")
+    .optional(),
 
   run_cmd: z
     .string({
-      description: `Команда для запуска. Использовать tool ${ToolNames.GET_DEPLOY_SETTINGS} для получения настроек по умолчанию для конкретного фреймворка. ОБЯЗАТЕЛЬНО для backend приложений`,
+      description: `Команда для запуска. Использовать ресурс ${ResourceNames.DEPLOY_SETTINGS} для получения настроек по умолчанию для конкретного фреймворка. ОБЯЗАТЕЛЬНО для backend приложений`,
     })
     .describe("ОБЯЗАТЕЛЬНОЕ ПОЛЕ для backend приложений - команда запуска"),
 
@@ -224,19 +227,64 @@ const outputSchema = {
 
 const handler = async (params: CreateAppParams) => {
   try {
-    const providers = await getVcsProvidersAction();
-    const repositoryName = params.repository_url.split("/").pop()?.replace(".git", "");
+    const [providers, presets, deploySettings] = await Promise.all([
+      getVcsProvidersAction(),
+      getAllowedPresetsAction(),
+      getDeploySettingsAction(),
+    ]);
+    const repositoryName = params.repository_url
+      .split("/")
+      .pop()
+      ?.replace(".git", "");
     const provider = providers?.find(
-      (provider) => repositoryName && provider.login.includes( repositoryName)
+      (provider) => repositoryName && provider.login.includes(repositoryName)
     );
+
     if (!provider) {
       return createToolResponse(
         `❌ Не удалось найти VCS провайдер для репозитория "${params.repository_url}". Нужно добавить VCS провайдер с помощью tool ${ToolNames.ADD_VCS_PROVIDER}`
       );
     }
 
-    
-    const app = await createAppAction({...params, provider_id: provider.provider_id});
+    if (!presets) {
+      return createToolResponse(
+        `❌ Не удалось получить список пресетов для создания приложения "${params.name}" в Timeweb Cloud`
+      );
+    }
+
+    const presetType =
+      params.type === AppTypes.FRONTEND
+        ? "frontend_presets"
+        : "backend_presets";
+    let preset = presets[presetType]?.find(
+      (preset) => preset.id === params.preset_id
+    );
+
+    if (!preset) {
+      preset = presets[presetType]?.[0];
+    }
+    if (!preset) {
+      return createToolResponse(
+        `❌ Не корректный ID пресета для создания приложения "${params.name}" в Timeweb Cloud. Используйте ресурс ${ResourceNames.ALLOWED_PRESETS}, чтобы получить список доступных пресетов`
+      );
+    }
+
+    const appParams = {
+      ...params,
+      preset_id: preset.id,
+      provider_id: provider.provider_id,
+    };
+
+    const deploySetting = deploySettings?.find(
+      (setting) => setting.framework === params.framework
+    );
+    if (deploySetting) {
+      params.build_cmd = deploySetting.build_cmd;
+      params.run_cmd = deploySetting.run_cmd;
+      params.index_dir = deploySetting.index_dir;
+    }
+
+    const app = await createAppAction(appParams);
 
     if (!app) {
       return createToolResponse(
@@ -244,7 +292,9 @@ const handler = async (params: CreateAppParams) => {
       );
     }
 
-    return createToolResponse(`✅ Приложение "${app.name}" успешно создано в Timeweb Cloud!
+    return createToolResponse(`✅ Приложение "${
+      app.name
+    }" успешно создано в Timeweb Cloud!
 
 📋 Детали созданного приложения:
 • Название: ${app.name}
