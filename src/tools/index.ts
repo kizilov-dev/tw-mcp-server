@@ -3,4 +3,5 @@ export { getAllowedPresetsTool } from "./get-allowed-presets.tool";
 export { getVcsProvidersTool } from "./get-vcs-providers.tool";
 export { addVcsProviderTool } from "./add-vcs-provider.tool";
 export { getVcsProviderRepositoriesTool } from "./get-vcs-provider-repositories.tool";
+export { getVcsProviderByRepositoryUrlTool } from "./get-vcs-provider-by-repository-url.tool";
 export { getDeploySettingsTool } from "./get-deploy-settings.tool";
