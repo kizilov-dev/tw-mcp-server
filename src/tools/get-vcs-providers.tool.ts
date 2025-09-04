@@ -1,23 +1,6 @@
 import { createToolResponse } from "../utils";
 import { getVcsProvidersAction } from "../actions/get-vcs-providers.action";
 import { ToolNames } from "../types/tool-names.enum";
-import { z } from "zod";
-
-const outputSchema = {
-  providers: z.array(z.object({
-    provider: z.string({
-      description: "Тип VCS провайдера (например, git)",
-    }),
-    provider_id: z.string({
-      description: "Уникальный ID провайдера в Timeweb Cloud",
-    }),
-    login: z.string({
-      description: "Название репозитория в Timeweb Cloud",
-    }),
-  }), {
-    description: "Массив подключенных VCS провайдеров",
-  }),
-};
 
 const handler = async () => {
   try {
@@ -65,6 +48,5 @@ export const getVcsProvidersTool = {
   title: "Получение списка VCS провайдеров",
   description: "Получает список всех добавленных VCS провайдеров",
   inputSchema: {},
-  outputSchema,
   handler,
 };

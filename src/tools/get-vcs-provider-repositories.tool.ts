@@ -10,21 +10,6 @@ const inputSchema = {
   }),
 };
 
-const outputSchema = {
-  repositories: z.array(
-    z.object({
-    id: z.string({
-      description: "Уникальный ID репозитория в Timeweb Cloud",
-    }),
-    url: z.string({
-      description: "URL репозитория",
-    }),
-  }),
-  {
-    description: "Массив репозиториев VCS провайдера",
-  }
-)};
-
 const handler = async (params: GetVcsProviderRepositoriesRequestDto) => {
   try {
     const repositories = await getVcsProviderRepositoriesAction(
@@ -65,6 +50,5 @@ export const getVcsProviderRepositoriesTool = {
   title: "Получение списка репозиториев VCS провайдера",
   description: "Получает список репозиториев VCS провайдера по ID",
   inputSchema,
-  outputSchema,
   handler,
 };

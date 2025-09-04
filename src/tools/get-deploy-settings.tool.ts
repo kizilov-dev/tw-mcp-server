@@ -1,24 +1,6 @@
-import { z } from "zod";
 import { ToolNames } from "../types/tool-names.enum";
 import { createToolResponse } from "../utils";
 import { getDeploySettingsAction } from "../actions/get-deploy-settings.action";
-
-const outputSchema = {
-  framework: z.string({
-    description: "Название фреймворка",
-  }),
-  build_cmd: z.string({
-    description: "Команда для сборки приложения",
-  }),
-  index_dir: z.string({
-    description: "Директория с index файлом (для frontend приложений)",
-  }),
-  run_cmd: z
-    .string({
-      description: "Команда для запуска приложения (для backend приложений)",
-    })
-    .optional(),
-};
 
 const handler = async () => {
   try {
@@ -57,6 +39,5 @@ export const getDeploySettingsTool = {
   description:
     "Получает список настроек деплоя по умолчанию для различных фреймворков",
   inputSchema: {},
-  outputSchema,
   handler,
 };

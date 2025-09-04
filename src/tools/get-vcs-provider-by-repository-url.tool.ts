@@ -9,22 +9,6 @@ const inputSchema = {
   }),
 };
 
-const outputSchema = {
-  provider: z
-    .object({
-      provider: z.string({
-        description: "Тип VCS провайдера (например, git)",
-      }),
-      provider_id: z.string({
-        description: "Уникальный ID провайдера в Timeweb Cloud",
-      }),
-      login: z.string({
-        description: "Название репозитория в Timeweb Cloud",
-      }),
-    })
-    .optional(),
-};
-
 const handler = async (params: { repository_url: string }) => {
   try {
     const providers = await getVcsProvidersAction();
@@ -65,6 +49,5 @@ export const getVcsProviderByRepositoryUrlTool = {
   title: "Поиск VCS провайдера по URL репозитория",
   description: "Находит VCS провайдер по URL репозитория",
   inputSchema,
-  outputSchema,
   handler,
 };

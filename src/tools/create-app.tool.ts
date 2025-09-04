@@ -167,64 +167,6 @@ const inputSchema = {
     .describe("ОБЯЗАТЕЛЬНОЕ ПОЛЕ - всегда false"),
 };
 
-const outputSchema = {
-  id: z.number({
-    description: "ID созданного приложения",
-  }),
-  name: z.string({
-    description: "Название приложения",
-  }),
-  ip: z.string({
-    description: "IP адрес приложения",
-  }),
-  type: z.string({
-    description: "Тип приложения (frontend/backend)",
-  }),
-  domains: z.array(z.string(), {
-    description: "Список доменов приложения",
-  }),
-  framework: z.string({
-    description: "Фреймворк приложения",
-  }),
-  branch: z.string({
-    description: "Ветка Git репозитория",
-  }),
-  comment: z.string({
-    description: "Комментарий к приложению",
-  }),
-  preset_id: z.number({
-    description: "ID пресета конфигурации",
-  }),
-  is_auto_deploy: z.literal(false, {
-    description: "Флаг автоматического деплоя (всегда false)",
-  }),
-  availability_zone: z.string({
-    description: "Зона доступности",
-  }),
-  configuration: z.object(
-    {
-      cpu: z.number({
-        description: "Количество CPU",
-      }),
-      ram: z.number({
-        description: "Объем RAM в МБ",
-      }),
-      network_bandwidth: z.number({
-        description: "Пропускная способность сети",
-      }),
-      cpu_frequency: z.string({
-        description: "Частота процессора",
-      }),
-      disk_type: z.string({
-        description: "Тип диска",
-      }),
-    },
-    {
-      description: "Конфигурация ресурсов приложения",
-    }
-  ),
-};
-
 const handler = async (params: CreateAppParams) => {
   try {
     const [providers, presets, deploySettings] = await Promise.all([
@@ -330,6 +272,5 @@ export const createAppTool = {
   title: "Создание приложения в Timeweb Cloud",
   description: `Создает приложение в Timeweb Cloud с автоматическим определением параметров проекта.`,
   inputSchema,
-  outputSchema,
   handler,
 };

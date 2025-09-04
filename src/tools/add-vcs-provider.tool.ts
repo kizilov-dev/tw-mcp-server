@@ -40,18 +40,6 @@ const inputSchema = {
   }),
 };
 
-const outputSchema = {
-  provider: z.string({
-    description: "Тип VCS провайдера. Всегда git",
-  }),
-  provider_id: z.string({
-    description: "ID провайдера в Timeweb Cloud",
-  }),
-  login: z.string({
-    description: "Название репозитория в Timeweb Cloud",
-  }),
-};
-
 const handler = async (params: AddVcsProviderRequestDto) => {
   try {
 
@@ -149,6 +137,5 @@ export const addVcsProviderTool = {
   title: "Добавление VCS провайдера",
   description: `Добавляет новый VCS провайдер для подключения Git репозиториев к Timeweb Cloud`,
   inputSchema,
-  outputSchema,
   handler,
 };

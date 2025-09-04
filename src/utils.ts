@@ -18,13 +18,9 @@ export const getVersion = (): string => {
   }
 };
 
-// Для tools БЕЗ outputSchema - возвращает текстовый контент
 export const createToolResponse = (text: string) => ({
   content: [{ type: "text" as const, text }],
 });
-
-// Для tools С outputSchema - возвращает структурированные данные
-export const createStructuredResponse = (data: any) => data;
 
 export const createResourceResponse = (uri: string, text: string) => ({
   contents: [{ uri, text, mimeType: "application/json" }],

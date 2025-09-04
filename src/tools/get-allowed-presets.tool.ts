@@ -1,72 +1,6 @@
-import { z } from "zod";
 import { ToolNames } from "../types/tool-names.enum";
 import { createToolResponse } from "../utils";
 import { getAllowedPresetsAction } from "../actions/get-allowed-presets.action";
-
-const outputSchema = {
-  backend_presets: z.array(
-    z.object({
-      id: z.number({
-        description: "ID пресета для backend приложений",
-      }),
-      description: z.string({
-        description: "Полное описание пресета",
-      }),
-      description_short: z.string({
-        description: "Краткое описание пресета",
-      }),
-      price: z.number({
-        description: "Цена пресета в рублях/месяц",
-      }),
-      cpu: z.number({
-        description: "Количество CPU ядер",
-      }),
-      ram: z.number({
-        description: "Объем RAM в МБ",
-      }),
-      disk: z.number({
-        description: "Размер диска в МБ",
-      }),
-      location: z.string({
-        description: "Локация сервера",
-      }),
-      cpu_frequency: z.string({
-        description: "Частота процессора",
-      }),
-    }),
-    {
-      description: "Список доступных пресетов для backend приложений",
-    }
-  ),
-  frontend_presets: z.array(
-    z.object({
-      id: z.number({
-        description: "ID пресета для frontend приложений",
-      }),
-      description: z.string({
-        description: "Полное описание пресета",
-      }),
-      description_short: z.string({
-        description: "Краткое описание пресета",
-      }),
-      price: z.number({
-        description: "Цена пресета в рублях/месяц",
-      }),
-      location: z.string({
-        description: "Локация сервера",
-      }),
-      requests: z.number({
-        description: "Количество запросов в месяц",
-      }),
-      disk: z.number({
-        description: "Размер диска в МБ",
-      }),
-    }),
-    {
-      description: "Список доступных пресетов для frontend приложений",
-    }
-  ),
-};
 
 const handler = async () => {
   try {
@@ -120,6 +54,5 @@ export const getAllowedPresetsTool = {
   title: "Получение доступных пресетов для создания приложения",
   description: "Получает список доступных пресетов для создания приложения",
   inputSchema: {},
-  outputSchema,
   handler,
 };
