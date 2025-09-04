@@ -6,7 +6,7 @@ MCP сервер для автоматизации деплоя приложен
 
 ### Cursor
 
-[![Add to Cursor](https://cursor.com/deeplink/mcp-install-dark.svg)](https://cursor.com/en/install-mcp?name=timeweb-mcp-server&config=eyJjb21tYW5kIjoibnB4IEB5b3VyLW9yZy90aW1ld2ViLW1jcC1zZXJ2ZXIiLCJlbnYiOnsiVElNRVdFQl9UT0tFTiI6InlvdXItdG9rZW4ifX0%3D)
+<a href="https://cursor.com/en/install-mcp?name=timeweb-mcp-server&config=eyJ0eXBlIjoic3RkaW8iLCJjb21tYW5kIjoibnB4IHRpbWV3ZWItbWNwLXNlcnZlciIsImVudiI6eyJUSU1FV0VCX1RPS0VOIjoiUEFTVCBUSU1FV0VCIFRPS0VOIEhFUkUifX0%3D"><img src="https://cursor.com/deeplink/mcp-install-dark.svg" alt="Add timeweb-mcp-server MCP server to Cursor" height="32" /></a>
 
 Или добавьте в настройки Cursor:
 
