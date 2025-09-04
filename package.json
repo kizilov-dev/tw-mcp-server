@@ -1,7 +1,7 @@
 {
   "name": "timeweb-mcp-server",
-  "version": "0.0.1",
-  "description": "MCP сервер для автоматизации деплоя приложений в Timeweb Cloud",
+  "version": "0.1.0",
+  "description": "MCP сервер для автоматизации развертывания приложений в Timeweb Cloud",
   "scripts": {
     "build": "tsdown && chmod 755 dist/index.js",
     "start": "node -r dotenv/config dist/index.js",
@@ -13,7 +13,7 @@
     "mcp",
     "timeweb",
     "deploy",
-    "automation"
+    "timeweb apps"
   ],
   "author": "Timeweb",
   "license": "MIT",
