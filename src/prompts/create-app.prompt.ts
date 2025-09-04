@@ -15,6 +15,7 @@ export const createAppPrompt = {
 Проанализируй структуру проекта. Если есть файлы docker или docker-compose, то это backend приложение с типом docker или docker-compose.
 Определи тип приложения (frontend/backend) по структуре проекта.
 Определи фреймворк по package.json, конфигурационным файлам и структуре директорий.
+ВЫПОЛНИ КОМАНДУ В ТЕРМИНАЛЕ ДЛЯ ПОЛУЧЕНИЯ ПЕРЕМЕННЫХ ОКРУЖЕНИЯ ИЗ .env ФАЙЛА.
 Получи URL репозитория из .git/config.
 Получи активную ветку origin из .git/HEAD.
 Получи SHA коммита из .git/refs/remotes/origin/HEAD.
