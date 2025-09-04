@@ -1,82 +1,24 @@
 # Timeweb MCP Server
 
-MCP сервер для автоматизации деплоя приложений в Timeweb Cloud. Этот сервер предоставляет набор инструментов для управления ресурсами Timeweb через Model Context Protocol.
+MCP сервер для автоматизации деплоя приложений в Timeweb Cloud через Model Context Protocol.
 
-## Возможности
-
-- Создание новых Apps в Timeweb Cloud
-
-## Требования
-
-- Node.js >= 20.0.0
-- npm
-
-## Установка
-
-1. Клонируйте репозиторий:
-
-```bash
-git clone <your-repo-url>
-cd mcp-server
-```
-
-2. Установите зависимости:
-
-```bash
-npm install
-```
-
-3. Настройте переменные окружения:
-
-```bash
-# export TIMEWEB_TOKEN="your-timeweb-token"
-```
-
-## Разработка
-
-### Сборка проекта
-
-```bash
-npm run build
-```
-
-### Режим разработки с автоматической пересборкой
-
-```bash
-npm run dev
-```
-
-### Проверка типов
-
-```bash
-npm run type-check
-```
-
-### Линтинг
-
-```bash
-npm run lint
-npm run lint:fix
-```
-
-### Форматирование кода
-
-```bash
-npm run format
-```
-
-## Использование
+## Интеграция
 
 ### Cursor
 
-Добавьте следующую конфигурацию в `.cursor/mcp.json`:
+[![Add to Cursor](https://cursor.com/deeplink/mcp-install-dark.svg)](https://cursor.com/en/install-mcp?name=timeweb-mcp-server&config=eyJjb21tYW5kIjoibnB4IEB5b3VyLW9yZy90aW1ld2ViLW1jcC1zZXJ2ZXIiLCJlbnYiOnsiVElNRVdFQl9UT0tFTiI6InlvdXItdG9rZW4ifX0%3D)
+
+Или добавьте в настройки Cursor:
 
 ```json
 {
   "mcpServers": {
     "timeweb-mcp-server": {
-      "command": "node",
-      "args": ["/path/to/mcp-server/dist/index.js"]
+      "command": "npx",
+      "args": ["@your-org/timeweb-mcp-server"],
+      "env": {
+        "TIMEWEB_TOKEN": "your-token"
+      }
     }
   }
 }
@@ -84,53 +26,49 @@ npm run format
 
 ### VS Code
 
-Добавьте следующую конфигурацию в `.vscode/mcp.json`:
+[Добавить в VSCode](vscode:mcp/install?%7B%22mcpServers%22%3A%7B%22timeweb-mcp-server%22%3A%7B%22command%22%3A%22npx%22%2C%22args%22%3A%5B%22%40your-org%2Ftimeweb-mcp-server%22%5D%2C%22env%22%3A%7B%22TIMEWEB_TOKEN%22%3A%22your-token%22%7D%7D%7D%7D), либо добавьте в настройки:
 
 ```json
 {
-  "servers": {
+  "mcp.servers": {
     "timeweb-mcp-server": {
-      "type": "stdio",
-      "command": "node",
-      "args": ["/path/to/mcp-server/dist/index.js"]
+      "command": "npx",
+      "args": ["@your-org/timeweb-mcp-server"],
+      "env": {
+        "TIMEWEB_TOKEN": "your-token"
+      }
     }
   }
 }
 ```
 
-## Доступные инструменты
+### Claude Desktop
+
+Добавьте в `claude_desktop_config.json`:
+
+```json
+{
+  "mcpServers": {
+    "timeweb-mcp-server": {
+      "command": "npx",
+      "args": ["@your-org/timeweb-mcp-server"],
+      "env": {
+        "TIMEWEB_TOKEN": "your-token"
+      }
+    }
+  }
+}
+```
+
+## Инструменты
 
 ### `create_timeweb_app`
 
-Создает новое приложение в Timeweb Cloud с автоматическим деплоем.
-
-**Параметры:**
-
-- `repository_url` (обязательный) - URL репозитория
-- `app_name` (обязательный) - название приложения
-- `app_type` (обязательный) - тип приложения (frontend/backend)
-- `framework` (обязательный) - фреймворк приложения
-- `preset_id` (обязательный) - ID пресета приложения
-- `branch` - ветка для деплоя (по умолчанию: master)
-- `build_command` - команда для сборки
-- `run_command` - команда для запуска
-- `index_directory` - директория с index файлом
-- `auto_deploy` - автоматический деплой (по умолчанию: false)
-- `project_id` - ID проекта
-- `comment` - комментарий к приложению
-- `envs` - переменные окружения
-- `system_dependencies` - системные зависимости
+Создает приложение в Timeweb Cloud с автоматическим определением параметров проекта.
 
 ### `add_vcs_provider`
 
-Добавляет новый VCS провайдер.
-
-**Параметры:**
-
-- `provider_type` (обязательный) - тип провайдера (git)
-- `url` (обязательный) - URL репозитория
-- `login` - логин для доступа
-- `password` - пароль или токен
+Добавляет VCS провайдер для подключения Git репозиториев.
 
 ### `get_vcs_providers`
 
@@ -140,10 +78,32 @@ npm run format
 
 Получает список репозиториев провайдера.
 
-## Примеры использования
+### `get_vcs_provider_by_repository_url`
 
-### Создание Next.js приложения
+Находит VCS провайдер по URL репозитория.
 
-```
-Создай мое приложение в Timeweb Cloud.
-```
+### `get_allowed_presets`
+
+Получает список доступных пресетов для создания приложения.
+
+### `get_deploy_settings`
+
+Получает настройки деплоя по умолчанию для различных фреймворков.
+
+## Промпты
+
+### `create_app_prompt`
+
+Помогает создать приложение в Timeweb Cloud с автоматическим определением параметров проекта.
+
+### `add_vcs_provider_prompt`
+
+Помогает добавить VCS провайдер для подключения репозитория.
+
+## Использование
+
+Запустите промпты, либо просто напишите: "Запусти мое приложение в таймвеб" - сервер автоматически определит тип приложения, фреймворк и создаст его в Timeweb Cloud.
+
+## Важно
+
+После создания приложения необходимо вручную настроить переменные окружения в панели управления Timeweb Cloud, так как у чатбота нет доступа к файлу `.env` вашего проекта.
