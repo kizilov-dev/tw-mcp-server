@@ -28,14 +28,14 @@ MCP сервер для автоматизации деплоя приложен
 
 ### VS Code
 
-[Добавить в VSCode](vscode:mcp/install?%7B%22timeweb-mcp-server%22%3A%7B%22command%22%3A%22npx%22%2C%22args%22%3A%5B%22%40timewb_cloud%2Ftimeweb-mcp-server%22%5D%2C%22env%22%3A%7B%22TIMEWEB_TOKEN%22%3A%22your-api-token%22%7D%7D%7D), либо добавьте в настройки `.vscode/mcp.json`:
+[Добавить в VSCode](vscode:mcp/install?%7B%22timeweb-mcp-server%22%3A%7B%22command%22%3A%22npx%22%2C%22args%22%3A%5B%22%40timeweb_cloud%2Ftimeweb-mcp-server%22%5D%2C%22env%22%3A%7B%22TIMEWEB_TOKEN%22%3A%22your-api-token%22%7D%7D%7D), либо добавьте в настройки `.vscode/mcp.json`:
 
 ```json
 {
   "mcp.servers": {
     "timeweb-mcp-server": {
       "command": "npx",
-      "args": ["@timewb_cloud/timeweb-mcp-server"],
+      "args": ["@timeweb_cloud/timeweb-mcp-server"],
       "env": {
         "TIMEWEB_TOKEN": "your-api-token"
       }
@@ -53,7 +53,7 @@ MCP сервер для автоматизации деплоя приложен
   "mcpServers": {
     "timeweb-mcp-server": {
       "command": "npx",
-      "args": ["@timewb_cloud/timeweb-mcp-server"],
+      "args": ["@timeweb_cloud/timeweb-mcp-server"],
       "env": {
         "TIMEWEB_TOKEN": "your-api-token"
       }
