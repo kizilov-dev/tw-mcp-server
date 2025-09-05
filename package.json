@@ -16,7 +16,7 @@
     "timeweb apps"
   ],
   "author": "Timeweb",
-  "license": "MIT",
+  "license": "UNLICENSED",
   "files": [
     "dist"
   ],
@@ -25,6 +25,14 @@
     "timeweb-mcp-server": "./dist/index.js"
   },
   "main": "dist/index.js",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/timeweb-cloud/mcp-server.git"
+  },
+  "homepage": "https://github.com/timeweb-cloud/mcp-server#readme",
+  "bugs": {
+    "url": "https://github.com/timeweb-cloud/mcp-server/issues"
+  },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.17.4",
     "axios": "^1.11.0",
