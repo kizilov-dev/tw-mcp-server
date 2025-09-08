@@ -43,24 +43,6 @@ MCP сервер для автоматизации деплоя приложен
 }
 ```
 
-### Claude Desktop
-
-Добавьте в `claude_desktop_config.json`:
-
-```json
-{
-  "mcpServers": {
-    "timeweb-mcp-server": {
-      "command": "npx",
-      "args": ["timeweb-mcp-server"],
-      "env": {
-        "TIMEWEB_TOKEN": "your-api-token"
-      }
-    }
-  }
-}
-```
-
 ## Инструменты
 
 ### `create_timeweb_app`
