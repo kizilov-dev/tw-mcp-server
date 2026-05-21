@@ -1,5 +1,5 @@
 export class NoTokenException extends Error {
   constructor() {
-    super("❌ Не установлены переменные окружения TIMEWEB_TOKEN");
+    super("TIMEWEB_TOKEN environment variable is not set");
   }
 }

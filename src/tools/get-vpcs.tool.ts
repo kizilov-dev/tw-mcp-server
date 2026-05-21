@@ -1,42 +1,37 @@
 import { createToolResponse } from "../utils";
-import { getVpcsAction } from "../actions/get-vpcs.action";
+import { vpcApiClient } from "../api";
 import { ToolNames } from "../types/tool-names.enum";
+import { withToolErrorHandling } from "../utils/error-handling";
+import { ToolDefinition } from "../types/tool.type";
 
-const handler = async () => {
-  try {
-    const vpcs = await getVpcsAction();
+const handler = withToolErrorHandling("fetching VPCs", async () => {
+  const vpcs = await vpcApiClient.getAll();
 
-    if (!vpcs || vpcs.length === 0) {
-      return createToolResponse(
-        `💡 VPC не найдены. Создайте первую VPC с помощью tool ${ToolNames.CREATE_VPC}`
-      );
-    }
+  if (!vpcs || vpcs.length === 0) {
+    return createToolResponse(
+      `No VPCs found. Create one via tool ${ToolNames.CREATE_VPC}`
+    );
+  }
 
-    return createToolResponse(`📋 Список VPC:
+  return createToolResponse(`VPCs:
 
     ${JSON.stringify(vpcs, null, 2)}
 
-    💡 Всего VPC: ${vpcs.length}
+    Total: ${vpcs.length}`);
+});
 
-    🎉 Список VPC успешно получен!`);
-  } catch (error) {
-    if (error instanceof Error) {
-      return createToolResponse(
-        `❌ Ошибка при получении списка VPC. Причина: ${error.message}`
-      );
-    }
-
-    return createToolResponse(
-      `❌ Неизвестная ошибка при получении списка VPC.`
-    );
-  }
-};
-
-export const getVpcsTool = {
+export const getVpcsTool: ToolDefinition = {
   name: ToolNames.GET_VPCS,
-  title: "Получение списка VPC",
+  title: "Get VPCs",
   description:
-    "Получает список всех виртуальных частных сетей (VPC) пользователя",
+    "Gets list of all user virtual private networks (VPCs)",
+  annotations: {
+    title: "Get VPCs",
+    readOnlyHint: true,
+    destructiveHint: false,
+    idempotentHint: true,
+    openWorldHint: true,
+  },
   inputSchema: {},
   handler,
 };

@@ -1,38 +1,20 @@
-import { ResourceTemplate } from "@modelcontextprotocol/sdk/server/mcp.js";
-import { getVcsProvidersAction } from "../actions/get-vcs-providers.action";
+import { appsApiClient } from "../api";
 import { ResourceNames } from "../types/resource-names.enum";
 import { createResourceResponse } from "../utils";
+import { withResourceErrorHandling } from "../utils/error-handling";
 
 export const vcsProvidersResource = {
   name: ResourceNames.VCS_PROVIDERS,
   uri: "vcs-provider://all",
-  template: new ResourceTemplate("vcs-provider://all", { list: undefined }),
-  title: "Список доступных VCS провайдеров",
-  description: "Список доступных VCS провайдеров в Timeweb Cloud",
-  handler: async (uri: URL) => {
-    try {
-      const result = await getVcsProvidersAction();
+  title: "VCS providers",
+  description: "Connected VCS providers in Timeweb Cloud",
+  handler: withResourceErrorHandling("VCS providers", async (uri: URL) => {
+    const result = await appsApiClient.getVcsProviders();
 
-      if (!result || result.length === 0) {
-        return createResourceResponse(
-          uri.href,
-          "Нет доступных VCS провайдеров"
-        );
-      }
-
-      return createResourceResponse(uri.href, JSON.stringify(result, null, 2));
-    } catch (error: unknown) {
-      if (error instanceof Error) {
-        return createResourceResponse(
-          uri.href,
-          `Не удалось получить список VCS провайдеров. Причина: ${error.message}`
-        );
-      }
-
-      return createResourceResponse(
-        uri.href,
-        `Не удалось получить список VCS провайдеров`
-      );
+    if (!result || result.length === 0) {
+      return createResourceResponse(uri.href, "No VCS providers found");
     }
-  },
+
+    return createResourceResponse(uri.href, JSON.stringify(result, null, 2));
+  }),
 };

@@ -1,43 +1,40 @@
 import { ToolNames } from "../types/tool-names.enum";
 import { createToolResponse } from "../utils";
-import { getDeploySettingsAction } from "../actions/get-deploy-settings.action";
+import { appsApiClient } from "../api";
+import { withToolErrorHandling } from "../utils/error-handling";
+import { ToolDefinition } from "../types/tool.type";
 
-const handler = async () => {
-  try {
-    const deploySettings = await getDeploySettingsAction();
+const handler = withToolErrorHandling("fetching deploy settings", async () => {
+  const deploySettings = await appsApiClient.getDeploySettings();
 
-    const responseMessage = `📋 Настройки деплоя по умолчанию:
+  const responseMessage = `Default deploy settings:
 
 ${deploySettings
   .map(
-    (setting) => `🔹 ${setting.framework}:
-     build_cmd: ${setting.build_cmd ?? ""}
-     index_dir: ${setting.index_dir ?? ""}
-     run_cmd: ${setting.run_cmd ?? ""}`
+    (setting) => `${setting.framework}:
+  build_cmd: ${setting.build_cmd ?? ""}
+  index_dir: ${setting.index_dir ?? ""}
+  run_cmd: ${setting.run_cmd ?? ""}`
   )
   .join("\n\n")}
 
-💡 Эти настройки нужно использовать при создании приложения в соответствующих полях в зависимости от фреймворка`;
+Use these settings in corresponding fields when creating an app, based on framework.`;
 
-    return createToolResponse(responseMessage);
-  } catch (error) {
-    if (error instanceof Error) {
-      return createToolResponse(
-        `❌ Ошибка при получении настроек деплоя. Причина: ${error.message}`
-      );
-    }
+  return createToolResponse(responseMessage);
+});
 
-    return createToolResponse(
-      `❌ Неизвестная ошибка при получении настроек деплоя.`
-    );
-  }
-};
-
-export const getDeploySettingsTool = {
+export const getDeploySettingsTool: ToolDefinition = {
   name: ToolNames.GET_DEPLOY_SETTINGS,
-  title: "Получение настроек деплоя по умолчанию",
+  title: "Get default deploy settings",
   description:
-    "Получает список настроек деплоя по умолчанию для различных фреймворков",
+    "Gets default deploy settings for various frameworks",
+  annotations: {
+    title: "Get default deploy settings",
+    readOnlyHint: true,
+    destructiveHint: false,
+    idempotentHint: true,
+    openWorldHint: true,
+  },
   inputSchema: {},
   handler,
 };

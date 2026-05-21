@@ -1,50 +1,45 @@
 import { createToolResponse } from "../utils";
-import { getVcsProvidersAction } from "../actions/get-vcs-providers.action";
+import { appsApiClient } from "../api";
 import { ToolNames } from "../types/tool-names.enum";
+import { withToolErrorHandling } from "../utils/error-handling";
+import { ToolDefinition } from "../types/tool.type";
 
-const handler = async () => {
-  try {
-    const providers = await getVcsProvidersAction();
+const handler = withToolErrorHandling("fetching VCS providers", async () => {
+  const providers = await appsApiClient.getVcsProviders();
 
-    if (!providers || providers.length === 0) {
-      return createToolResponse(
-        `💡 VCS провайдеры не найдены. Добавьте первый провайдер с помощью tool ${ToolNames.ADD_VCS_PROVIDER}`
-      );
-    }
+  if (!providers || providers.length === 0) {
+    return createToolResponse(
+      `No VCS providers found. Add one via tool ${ToolNames.ADD_VCS_PROVIDER}`
+    );
+  }
 
-    const providersList = providers
-      .map(
-        (provider) =>
-          `🔹 ${provider.provider} провайдер
+  const providersList = providers
+    .map(
+      (provider) =>
+        `${provider.provider} provider
         ID: ${provider.provider_id}
         Name: ${provider.login}`
-      )
-      .join("\n\n");
+    )
+    .join("\n\n");
 
-    return createToolResponse(`📋 Список VCS провайдеров:
+  return createToolResponse(`VCS providers:
 
     ${providersList}
 
-    💡 Всего провайдеров: ${providers.length}
+    Total: ${providers.length}`);
+});
 
-    🎉 Список провайдеров успешно получен!`);
-  } catch (error) {
-    if (error instanceof Error) {
-      return createToolResponse(
-        `❌ Ошибка при получении списка VCS провайдеров. Причина: ${error.message}`
-      );
-    }
-
-    return createToolResponse(
-      `❌ Неизвестная ошибка при получении списка VCS провайдеров.`
-    );
-  }
-};
-
-export const getVcsProvidersTool = {
+export const getVcsProvidersTool: ToolDefinition = {
   name: ToolNames.GET_VCS_PROVIDERS,
-  title: "Получение списка VCS провайдеров",
-  description: "Получает список всех добавленных VCS провайдеров",
+  title: "Get VCS providers",
+  description: "Gets list of all added VCS providers",
+  annotations: {
+    title: "Get VCS providers",
+    readOnlyHint: true,
+    destructiveHint: false,
+    idempotentHint: true,
+    openWorldHint: true,
+  },
   inputSchema: {},
   handler,
 };

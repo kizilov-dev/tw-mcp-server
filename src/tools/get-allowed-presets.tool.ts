@@ -1,58 +1,55 @@
 import { ToolNames } from "../types/tool-names.enum";
 import { createToolResponse } from "../utils";
-import { getAllowedPresetsAction } from "../actions/get-allowed-presets.action";
+import { appsApiClient } from "../api";
+import { withToolErrorHandling } from "../utils/error-handling";
+import { ToolDefinition } from "../types/tool.type";
 
-const handler = async () => {
-  try {
-    const presets = await getAllowedPresetsAction();
+const handler = withToolErrorHandling("fetching presets", async () => {
+  const presets = await appsApiClient.getAllowedPresets();
 
-    const responseMessage = `📋 Доступные пресеты для создания приложения:
+  const responseMessage = `App presets:
 
-🔹 Backend пресеты:
+Backend presets:
 ${
   presets.backend_presets
     ?.map(
       (preset) =>
         `ID: ${preset.id} | ${preset.description_short}
-     💰 Цена: ${preset.price}₽/мес
-     🖥️ CPU: ${preset.cpu}
-     💾 RAM: ${preset.ram / 1024}Gb
-     💿 Диск: ${preset.disk / 1024}Gb
-     ⚡ Частота: ${preset.cpu_frequency}GHz`
+  Price: ${preset.price} RUB/mo
+  CPU: ${preset.cpu}, RAM: ${preset.ram / 1024}GB, Disk: ${preset.disk / 1024}GB
+  Frequency: ${preset.cpu_frequency}GHz`
     )
-    .join("\n\n") || "  Нет доступных backend пресетов"
+    .join("\n\n") || "  No backend presets available"
 }
 
-🔹 Frontend пресеты:
+Frontend presets:
 ${
   presets.frontend_presets
     ?.map(
       (preset) =>
         `ID: ${preset.id} | ${preset.description_short}
-     💰 Цена: ${preset.price}₽/мес
-     💿 Диск: ${preset.disk}Mb`
+  Price: ${preset.price} RUB/mo
+  Disk: ${preset.disk}MB`
     )
-    .join("\n\n") || "  Нет доступных frontend пресетов"
+    .join("\n\n") || "  No frontend presets available"
 }
 
-💡 Используйте ID пресета при создании приложения в поле preset_id`;
+Use preset ID in the preset_id field when creating an app.`;
 
-    return createToolResponse(responseMessage);
-  } catch (error) {
-    if (error instanceof Error) {
-      return createToolResponse(
-        `❌ Ошибка при получении пресетов. Причина: ${error.message}`
-      );
-    }
+  return createToolResponse(responseMessage);
+});
 
-    return createToolResponse(`❌ Неизвестная ошибка при получении пресетов.`);
-  }
-};
-
-export const getAllowedPresetsTool = {
+export const getAllowedPresetsTool: ToolDefinition = {
   name: ToolNames.GET_ALLOWED_PRESETS,
-  title: "Получение доступных пресетов для создания приложения",
-  description: "Получает список доступных пресетов для создания приложения",
+  title: "Get allowed app presets",
+  description: "Gets list of available presets for app creation",
+  annotations: {
+    title: "Get allowed app presets",
+    readOnlyHint: true,
+    destructiveHint: false,
+    idempotentHint: true,
+    openWorldHint: true,
+  },
   inputSchema: {},
   handler,
 };

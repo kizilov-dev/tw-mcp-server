@@ -1,37 +1,35 @@
 import { createToolResponse } from "../utils";
-import { getDatabasePresetsAction } from "../actions/get-database-presets.action";
+import { databaseApiClient } from "../api";
 import { ToolNames } from "../types/tool-names.enum";
+import { withToolErrorHandling } from "../utils/error-handling";
+import { ToolDefinition } from "../types/tool.type";
 
-const handler = async () => {
-  try {
-    const presets = await getDatabasePresetsAction();
+const handler = withToolErrorHandling("fetching database presets", async () => {
+  const presets = await databaseApiClient.getPresets();
 
-    if (!presets || !presets.length) {
-      return createToolResponse(
-        `❌ Не удалось получить список пресетов баз данных`
-      );
-    }
-
-    const response = `📊 **Пресеты баз данных Timeweb Cloud**\n\n;${JSON.stringify(presets, null, 2)}`;
-
-    return createToolResponse(response);
-  } catch (error) {
-    if (error instanceof Error) {
-      return createToolResponse(
-        `❌ Ошибка получения пресетов баз данных. Причина: ${error.message}`
-      );
-    }
+  if (!presets || !presets.length) {
     return createToolResponse(
-      `❌ Неизвестная ошибка при получении пресетов баз данных`
+      `❌ Failed to fetch database presets`
     );
   }
-};
 
-export const getDatabasePresetsTool = {
+  const response = `Database presets:\n\n${JSON.stringify(presets, null, 2)}`;
+
+  return createToolResponse(response);
+});
+
+export const getDatabasePresetsTool: ToolDefinition = {
   name: ToolNames.GET_DATABASE_PRESETS,
-  title: "Получение пресетов баз данных",
+  title: "Get database presets",
   description:
-    "Получает список доступных пресетов конфигураций для создания баз данных",
+    "Gets list of available configuration presets for database creation",
+  annotations: {
+    title: "Get database presets",
+    readOnlyHint: true,
+    destructiveHint: false,
+    idempotentHint: true,
+    openWorldHint: true,
+  },
   inputSchema: {},
   handler,
 };

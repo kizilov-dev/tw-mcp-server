@@ -1,68 +1,68 @@
 import { z } from "zod";
 import { createToolResponse, getPresetDatabaseType } from "../utils";
-import { createDatabaseAction } from "../actions/create-database.action";
+import { databaseApiClient } from "../api";
 import { ToolNames } from "../types/tool-names.enum";
 import { DatabaseTypes } from "../types/database-types.enum";
 import { AvailabilityZones } from "../types/availability-zones.enum";
-import { dbaasApiClient } from "../api";
 import { ResourceNames } from "../types/resource-names.enum";
+import { ToolDefinition } from "../types/tool.type";
 
 const inputSchema = {
   name: z
     .string({
-      description: "Название базы данных",
+      description: "Database name",
     })
-    .min(3, "Название не может быть пустым")
-    .describe("ОБЯЗАТЕЛЬНОЕ ПОЛЕ - название базы данных"),
+    .min(3, "Name must be at least 3 characters")
+    .describe("REQUIRED - database name"),
   type: z
     .nativeEnum(DatabaseTypes)
-    .describe("ОБЯЗАТЕЛЬНОЕ ПОЛЕ - тип базы данных"),
+    .describe("REQUIRED - database type"),
   preset_id: z
     .number({
-      description: "ID пресета конфигурации базы данных",
+      description: "Database configuration preset ID",
     })
-    .int("ID пресета должен быть целым числом")
-    .positive("ID пресета должен быть положительным числом")
-    .describe("ОБЯЗАТЕЛЬНОЕ ПОЛЕ - ID пресета"),
+    .int("Preset ID must be an integer")
+    .positive("Preset ID must be positive")
+    .describe("REQUIRED - preset ID"),
   availability_zone: z
     .nativeEnum(AvailabilityZones)
-    .describe("ОБЯЗАТЕЛЬНОЕ ПОЛЕ - зона доступности"),
+    .describe("REQUIRED - availability zone"),
   admin_password: z
     .string({
-      description: "Пароль администратора базы данных",
+      description: "Database admin password",
     })
-    .min(8, "Пароль должен содержать минимум 8 символов")
-    .describe("ОБЯЗАТЕЛЬНОЕ ПОЛЕ - пароль администратора"),
+    .min(8, "Password must be at least 8 characters")
+    .describe("REQUIRED - admin password"),
   floating_ip: z
     .string({
-      description: "Floating IP адрес для подключения к базе данных",
+      description: "Floating IP address for database connection",
     })
     .ip({
       version: "v4",
-      message: "Floating IP должен быть валидным IPv4 адресом",
+      message: "Floating IP must be a valid IPv4 address",
     })
-    .describe("ОБЯЗАТЕЛЬНОЕ ПОЛЕ - floating IP адрес"),
+    .describe("REQUIRED - floating IP address"),
   vpc_id: z
     .string({
-      description: `ID виртуальной приватной сети (VPC). Получить список VPC можно в ресурсах ${ResourceNames.GET_VPCS}`,
+      description: `Virtual private network (VPC) ID. Get VPC list from resource ${ResourceNames.GET_VPCS}`,
     })
-    .min(1, "ID VPC не может быть пустым")
-    .describe("ОБЯЗАТЕЛЬНОЕ ПОЛЕ - ID VPC"),
+    .min(1, "VPC ID cannot be empty")
+    .describe("REQUIRED - VPC ID"),
   hash_type: z
     .string({
-      description: "Тип хеширования паролей",
+      description: "Password hashing type",
     })
     .default("caching_sha2")
     .describe(
-      "НЕ ОБЯЗАТЕЛЬНОЕ ПОЛЕ - тип хеширования (по умолчанию: caching_sha2)"
+      "OPTIONAL - hash type (default: caching_sha2)"
     ),
   auto_backups: z
     .boolean({
-      description: "Включить ли автоматические резервные копии",
+      description: "Enable automatic backups",
     })
     .default(true)
     .describe(
-      "НЕ ОБЯЗАТЕЛЬНОЕ ПОЛЕ - автоматические резервные копии (по умолчанию: true)"
+      "OPTIONAL - automatic backups (default: true)"
     ),
 };
 
@@ -77,28 +77,12 @@ const handler = async (params: {
   hash_type?: "caching_sha2";
 }) => {
   try {
-    const availableZones = Object.values(AvailabilityZones);
-
-    if (!availableZones.includes(params.availability_zone)) {
-      return createToolResponse(
-        `❌ Неверная зона доступности: ${params.availability_zone}. Выбери из списка: ${availableZones.join(", ")}`
-      );
-    }
-
-    const availableTypes = Object.values(DatabaseTypes);
-
-    if (!availableTypes.includes(params.type)) {
-      return createToolResponse(
-        `❌ Неверный тип базы данных: ${params.type}. Выбери из списка: ${availableTypes.join(", ")}`
-      );
-    }
-
-    const allPresets = await dbaasApiClient.getDatabasePresets();
+    const allPresets = await databaseApiClient.getPresets();
     const availablePresets = allPresets.filter(preset => preset.type === getPresetDatabaseType(params.type));
 
     if (!availablePresets || !availablePresets.length) {
       return createToolResponse(
-        `❌ Не удалось получить список пресетов баз данных. Убедитесь, что тип базы данных "${params.type}" соответствует типу пресета`
+        `❌ Failed to fetch database presets. Verify database type "${params.type}" matches preset type`
       );
     }
 
@@ -106,11 +90,11 @@ const handler = async (params: {
 
     if (!preset) {
       return createToolResponse(
-        `❌ Не корректный ID пресета для создания базы данных "${params.name}" в Timeweb Cloud. Используй доступые пресеты для этого типа базы данных ${JSON.stringify(availablePresets, null, 2)}`
+        `❌ Invalid preset ID for database "${params.name}". Available presets for this type: ${JSON.stringify(availablePresets, null, 2)}`
       );
-    }    
+    }
 
-    const db = await createDatabaseAction({
+    const db = await databaseApiClient.create({
       name: params.name,
       type: params.type,
       presetId: params.preset_id,
@@ -123,44 +107,49 @@ const handler = async (params: {
 
     if (!db) {
       return createToolResponse(
-        `❌ Не удалось создать базу данных "${params.name}"`
+        `❌ Failed to create database "${params.name}"`
       );
     }
 
-    return createToolResponse(`✅ База данных успешно создана!
+    return createToolResponse(`✅ Database created
 
-📋 Детали созданной базы данных:
-• Название: ${db.name}
-• ID: ${db.id}
-• Тип: ${db.type}
-• Статус: ${db.status}
-• Порт: ${db.port}
-• Зона доступности: ${db.availability_zone}
-• Локация: ${db.location}
-• Пресет: ${db.preset_id}
-• Проект: ${db.project_id}
-• Тип хеширования: ${db.hash_type}
-• Публичная сеть: ${db.is_enabled_public_network ? "✅" : "❌"}
-• Автобэкапы: ${db.is_autobackups_enabled ? "✅" : "❌"}
-• Безопасное соединение: ${db.is_secure_connection_enabled ? "✅" : "❌"}
-• Создана: ${new Date(db.created_at).toLocaleString("ru-RU")}
-ДАННЫЕ ДЛЯ ПОДКЛЮЧЕНИЯ К БАЗЕ ДАННЫХ БУДУТ ДОСТУПНЫ ПОСЛЕ СОЗДАНИЯ В ПАНЕЛИ УПРАВЛЕНИЯ TIMEWEB CLOUD
-🎉 База данных скоро будет готова к использованию!`);
+Name: ${db.name}
+ID: ${db.id}
+Type: ${db.type}
+Status: ${db.status}
+Port: ${db.port}
+Availability zone: ${db.availability_zone}
+Location: ${db.location}
+Preset: ${db.preset_id}
+Project: ${db.project_id}
+Hash type: ${db.hash_type}
+Public network: ${db.is_enabled_public_network ? "yes" : "no"}
+Auto backups: ${db.is_autobackups_enabled ? "yes" : "no"}
+Secure connection: ${db.is_secure_connection_enabled ? "yes" : "no"}
+Created: ${new Date(db.created_at).toISOString()}
+NOTE: Connection credentials will be available in Timeweb Cloud dashboard after provisioning.`);
   } catch (error) {
     if (error instanceof Error) {
       return createToolResponse(
-        `❌ Ошибка создания базы данных. Причина: ${error.message}`
+        `❌ Error creating database: ${error.message}`
       );
     }
-    return createToolResponse(`❌ Неизвестная ошибка при создании базы данных`);
+    return createToolResponse(`❌ Unknown error creating database`);
   }
 };
 
-export const createDatabaseTool = {
+export const createDatabaseTool: ToolDefinition = {
   name: ToolNames.CREATE_DATABASE,
-  title: "Создание базы данных",
+  title: "Create database",
   description:
-    "Создает новую базу данных в Timeweb Cloud с указанными параметрами",
+    "Creates a new database in Timeweb Cloud with specified parameters",
+  annotations: {
+    title: "Create database",
+    readOnlyHint: false,
+    destructiveHint: false,
+    idempotentHint: false,
+    openWorldHint: true,
+  },
   inputSchema,
   handler,
 };

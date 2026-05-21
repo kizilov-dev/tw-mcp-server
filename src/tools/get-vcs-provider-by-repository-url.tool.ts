@@ -1,52 +1,47 @@
 import { createToolResponse } from "../utils";
 import { ToolNames } from "../types/tool-names.enum";
 import { z } from "zod";
-import { getVcsProvidersAction } from "../actions/get-vcs-providers.action";
+import { appsApiClient } from "../api";
+import { withToolErrorHandling } from "../utils/error-handling";
+import { ToolDefinition } from "../types/tool.type";
 
 const inputSchema = {
   repository_url: z.string({
-    description: "URL репозитория для поиска VCS провайдера",
+    description: "Repository URL to find VCS provider for",
   }),
 };
 
-const handler = async (params: { repository_url: string }) => {
-  try {
-    const providers = await getVcsProvidersAction();
+const handler = withToolErrorHandling("finding VCS provider", async (params: { repository_url: string }) => {
+  const providers = await appsApiClient.getVcsProviders();
 
-    const provider = providers?.find((provider) =>
-      params.repository_url.includes(provider.login.replace(/^[^\/]+\//, ''))
-    );
+  const provider = providers?.find((provider) =>
+    params.repository_url.includes(provider.login.replace(/^[^\/]+\//, ''))
+  );
 
-    if (!provider) {
-      return createToolResponse(
-        `💡 VCS провайдеры не найдены. Добавьте первый провайдер с помощью tool ${ToolNames.ADD_VCS_PROVIDER}`
-      );
-    }
-
-    return createToolResponse(`🔍 VCS провайдер найден:
-
-    🔹 ${provider.provider} провайдер
-    ID: ${provider.provider_id}
-    Name: ${provider.login}
-
-    🎉 VCS провайдер успешно найден!`);
-  } catch (error) {
-    if (error instanceof Error) {
-      return createToolResponse(
-        `❌ Ошибка при поиске VCS провайдера. Причина: ${error.message}`
-      );
-    }
-
+  if (!provider) {
     return createToolResponse(
-      `❌ Неизвестная ошибка при поиске VCS провайдера.`
+      `No VCS providers found. Add one via tool ${ToolNames.ADD_VCS_PROVIDER}`
     );
   }
-};
 
-export const getVcsProviderByRepositoryUrlTool = {
+  return createToolResponse(`VCS provider found:
+
+    ${provider.provider} provider
+    ID: ${provider.provider_id}
+    Name: ${provider.login}`);
+});
+
+export const getVcsProviderByRepositoryUrlTool: ToolDefinition = {
   name: ToolNames.GET_VCS_PROVIDER_BY_REPOSITORY_URL,
-  title: "Поиск VCS провайдера по URL репозитория",
-  description: "Находит VCS провайдер по URL репозитория",
+  title: "Find VCS provider by repository URL",
+  description: "Finds VCS provider by repository URL",
+  annotations: {
+    title: "Find VCS provider by repository URL",
+    readOnlyHint: true,
+    destructiveHint: false,
+    idempotentHint: true,
+    openWorldHint: true,
+  },
   inputSchema,
   handler,
 };

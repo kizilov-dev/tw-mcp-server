@@ -1,2 +1,4 @@
 export { appsApiClient } from "./apps";
-export { dbaasApiClient } from "./dbaas";
+export { databaseApiClient } from "./databases";
+export { vpcApiClient } from "./vpcs";
+export { floatingIpApiClient } from "./floating-ips";

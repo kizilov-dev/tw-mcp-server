@@ -1,42 +1,39 @@
 import { z } from "zod";
 import { createToolResponse } from "../utils";
 import { AddVcsProviderRequestDto } from "../types/dto/add-vcs-provider-request.dto";
-import { addVcsProviderAction } from "../actions/add-vcs-provider.action";
+import { appsApiClient } from "../api";
 import { ToolNames } from "../types/tool-names.enum";
 import { VcsProviders } from "../types/vcs-providers.enum";
+import { ToolDefinition } from "../types/tool.type";
 
 const inputSchema = {
   url: z
     .string({
-      description: `URL репозитория в формате HTTPS. Пример https://github.com/username/repo.git. АВТОМАТИЧЕСКИ определить из .git/config если не указано явно`,
+      description: `Repository URL in HTTPS format. Example: https://github.com/username/repo.git. AUTO-DETECT from .git/config if not specified.`,
     })
-    .url("URL должен быть валидным"),
+    .url("Must be a valid URL"),
   login: z
     .string({
-      description: `ЛОГИН ДЛЯ ДОСТУПА К РЕПОЗИТОРИЮ.
-        🔒 ОБЯЗАТЕЛЬНО для приватных репозиториев!
-
-        Если при добавлении провайдера возникнет ошибка авторизации:
-        • Запросить логин и пароль/токен у пользователя
-        • Если ошибка авторизации - ПЕРЕЗАПРОСИТЬ с новыми данными`,
+      description: `Repository access login. Required for private repositories.
+        If auth error occurs when adding provider:
+        - Ask user for login and token
+        - Retry with new credentials`,
     })
     .optional(),
   password: z
     .string({
-      description: `ПАРОЛЬ ИЛИ ТОКЕН ДЛЯ ДОСТУПА К РЕПОЗИТОРИЮ.
-        🔒 ОБЯЗАТЕЛЬНО для приватных репозиториев!
+      description: `Repository access password or token. Required for private repositories.
+        Options:
+        - Personal Access Token (recommended)
+        - Account password
 
-        Варианты:
-        • Personal Access Token (рекомендуется)
-        • Пароль аккаунта
-
-        Если при добавлении провайдера возникнет ошибка авторизации:
-        • Запросить токен/пароль у пользователя
-        • Если ошибка авторизации - ПЕРЕЗАПРОСИТЬ с новыми данными`,
+        If auth error occurs when adding provider:
+        - Ask user for token/password
+        - Retry with new credentials`,
     })
     .optional(),
   provider_type: z.nativeEnum(VcsProviders, {
-    description: "Тип VCS провайдера",
+    description: "VCS provider type",
   }),
 };
 
@@ -45,28 +42,25 @@ const handler = async (params: AddVcsProviderRequestDto) => {
 
     if (!params.provider_type) {
       return createToolResponse(
-        `❌ Не указан тип VCS провайдера!`
+        `❌ VCS provider type not specified`
       );
     }
 
     if (params.provider_type === VcsProviders.GIT) {
-      await addVcsProviderAction(params);
+      await appsApiClient.addVcsProvider(params);
     } else {
       return createToolResponse(
-        `❌ Не поддерживается тип VCS провайдера: используйте git для подключения по ссылке`
+        `❌ Unsupported VCS provider type: use git for URL-based connection`
       );
     }
 
 
-    return createToolResponse(`✅ VCS провайдер успешно добавлен!
+    return createToolResponse(`✅ VCS provider added
 
-📋 Детали провайдера:
-• Тип: ${params.provider_type}
-• URL: ${params.url}
-${params.login ? `• Логин: ${params.login}` : ""}
-${params.password ? `• Пароль/токен: ***` : ""}
-
-🎉 Провайдер готов к использованию для деплоя приложений!`);
+Type: ${params.provider_type}
+URL: ${params.url}
+${params.login ? `Login: ${params.login}` : ""}
+${params.password ? `Password/token: ***` : ""}`);
   } catch (error) {
     if (error instanceof Error) {
       const errorMessage = error.message.toLowerCase();
@@ -77,17 +71,9 @@ ${params.password ? `• Пароль/токен: ***` : ""}
         errorMessage.includes("401")
       ) {
         return createToolResponse(
-          `❌ ОШИБКА АВТОРИЗАЦИИ при добавлении VCS провайдера!
+          `❌ AUTH ERROR: Invalid credentials. Ask user for login + token and retry.
 
-🔍 Причина: Недостаточно прав доступа или неверные учетные данные
-
-💡 РЕШЕНИЕ: Проверьте правильность логина и токена/пароля
-
-🔄 НЕОБХОДИМО ПЕРЕЗАПРОСИТЬ ДАННЫЕ:
-• Логин (username)
-• Пароль/токен с необходимыми правами доступа
-
-Детали ошибки: ${error.message}`
+Details: ${error.message}`
         );
       }
 
@@ -97,41 +83,34 @@ ${params.password ? `• Пароль/токен: ***` : ""}
         errorMessage.includes("not found")
       ) {
         return createToolResponse(
-          `❌ РЕПОЗИТОРИЙ НЕ НАЙДЕН!
+          `❌ REPOSITORY NOT FOUND: Verify URL exists and is accessible.
 
-🔍 Причина: Репозиторий не существует или недоступен
-
-💡 РЕШЕНИЕ:
-• Проверьте правильность URL репозитория
-• Убедитесь, что репозиторий существует
-• Проверьте права доступа к репозиторию
-
-Текущий URL: ${params.url}`
+URL: ${params.url}`
         );
       }
 
       return createToolResponse(
-        `❌ Ошибка при добавлении VCS провайдера!
-
-🔍 Детали ошибки: ${error.message}
-
-💡 Для приватных репозиториев убедитесь, что:
-• Указан корректный логин
-• Указан валидный токен/пароль с правами доступа
-• Токен имеет необходимые scope (repo, read/write)`
+        `❌ Error adding VCS provider: ${error.message}`
       );
     }
 
     return createToolResponse(
-      `❌ Неизвестная ошибка при добавлении VCS провайдера. Попробуйте еще раз.`
+      `❌ Unknown error adding VCS provider`
     );
   }
 };
 
-export const addVcsProviderTool = {
+export const addVcsProviderTool: ToolDefinition = {
   name: ToolNames.ADD_VCS_PROVIDER,
-  title: "Добавление VCS провайдера",
-  description: `Добавляет новый VCS провайдер для подключения Git репозиториев к Timeweb Cloud`,
+  title: "Add VCS provider",
+  description: `Adds a new VCS provider for connecting Git repositories to Timeweb Cloud`,
+  annotations: {
+    title: "Add VCS provider",
+    readOnlyHint: false,
+    destructiveHint: false,
+    idempotentHint: false,
+    openWorldHint: true,
+  },
   inputSchema,
   handler,
 };

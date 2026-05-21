@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
+import { ResourceTemplate } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import * as tools from "./tools";
 import * as resources from "./resources";
@@ -29,27 +30,26 @@ const startServer = async () => {
         title: tool.title,
         description: tool.description,
         inputSchema: tool.inputSchema,
-        annotations: {
-          title: tool.title,
-          readOnlyHint: false,
-          destructiveHint: false,
-          idempotentHint: false,
-          openWorldHint: true,
-        },
+        annotations: tool.annotations,
       },
       tool.handler
     );
   });
 
   Object.values(resources).forEach((resource) => {
+    const isTemplate = resource.uri.includes("{");
+    const uriOrTemplate = isTemplate
+      ? new ResourceTemplate(resource.uri, { list: undefined })
+      : resource.uri;
+
     server.registerResource(
       resource.name,
-      resource.uri,
+      uriOrTemplate as any,
       {
         title: resource.title,
         description: resource.description,
       },
-      resource.handler
+      resource.handler as any
     );
   });
 

@@ -6,12 +6,10 @@ import {
 } from "../types/app-frameworks.type";
 import { ToolNames } from "../types/tool-names.enum";
 import { createToolResponse } from "../utils";
-import { createAppAction } from "../actions/create-app.action";
+import { appsApiClient } from "../api";
 import { CreateAppParams } from "../types/create-app-params.type";
-import { getVcsProvidersAction } from "../actions/get-vcs-providers.action";
-import { getAllowedPresetsAction } from "../actions/get-allowed-presets.action";
 import { ResourceNames } from "../types/resource-names.enum";
-import { getDeploySettingsAction } from "../actions/get-deploy-settings.action";
+import { ToolDefinition } from "../types/tool.type";
 
 const frameworks = [
   ...Object.values(FrameworksFrontend),
@@ -21,158 +19,158 @@ const frameworks = [
 const inputSchema = {
   type: z
     .nativeEnum(AppTypes, {
-      description: `Тип приложения (frontend/backend). АВТОМАТИЧЕСКИ определить по структуре проекта`,
+      description: `App type (frontend/backend). AUTO-DETECT from project structure`,
     })
     .describe(
-      "ОБЯЗАТЕЛЬНОЕ ПОЛЕ - тип приложения должен быть определен (frontend или backend)"
+      "REQUIRED - app type (frontend or backend)"
     ),
 
   provider_id: z
     .string({
-      description: `ID подключенного VCS провайдера в timeweb cloud. АВТОМАТИЧЕСКИ запросить с помощью tool ${ToolNames.GET_VCS_PROVIDER_BY_REPOSITORY_URL} подключенные провайдеры, и выбрать подходящий по названию репозитория. Если нет подходящих, создать новый репозиторий автоматически используя tool ${ToolNames.ADD_VCS_PROVIDER}.`,
+      description: `VCS provider ID. AUTO-FETCH via tool ${ToolNames.GET_VCS_PROVIDER_BY_REPOSITORY_URL}, pick matching one. If none found, create via ${ToolNames.ADD_VCS_PROVIDER}.`,
     })
-    .uuid("ID провайдера должен быть валидным UUID")
-    .describe("ОБЯЗАТЕЛЬНОЕ ПОЛЕ - ID VCS провайдера"),
+    .uuid("Must be a valid UUID")
+    .describe("REQUIRED - VCS provider ID"),
 
   repository_id: z
     .string({
-      description: `ID репозитория в timeweb cloud. АВТОМАТИЧЕСКИ запросить с помощью tool ${ToolNames.GET_VCS_PROVIDER_REPOSITORIES} подключенные репозитории с использованием provider_id, и выбрать подходящий по названию. Если нет подходящих, НЕ создавать новый репозиторий автоматически`,
+      description: `Repository ID. AUTO-FETCH via tool ${ToolNames.GET_VCS_PROVIDER_REPOSITORIES} using provider_id, pick matching one. Do NOT create automatically if not found.`,
     })
-    .uuid("ID репозитория должен быть валидным UUID")
-    .describe("ОБЯЗАТЕЛЬНОЕ ПОЛЕ - ID репозитория"),
+    .uuid("Must be a valid UUID")
+    .describe("REQUIRED - repository ID"),
 
   repository_url: z
     .string({
       description:
-        "URL подключенного репозитория. АВТОМАТИЧЕСКИ достать из папки .git/refs/remotes/origin/, не запуская команды в терминале. URL должен быть в формате https://github.com/user/repo",
+        "Repository URL. AUTO-READ from .git/config, do NOT run shell commands. Must be https format.",
     })
-    .url("URL должен быть валидным")
-    .describe("ОБЯЗАТЕЛЬНОЕ ПОЛЕ - URL репозитория"),
+    .url("Must be a valid URL")
+    .describe("REQUIRED - repository URL"),
 
   preset_id: z
     .number({
-      description: `ID пресета приложения в timeweb cloud. АВТОМАТИЧЕСКИ запросить с помощью ресурса ${ResourceNames.ALLOWED_PRESETS} доступные пресеты, и выбрать первый подходящий для определенного типа приложения и фреймворка`,
+      description: `App preset ID. AUTO-FETCH via resource ${ResourceNames.ALLOWED_PRESETS}, pick first matching preset for the app type.`,
     })
-    .int("ID пресета должен быть целым числом")
-    .positive("ID пресета должен быть положительным числом")
-    .describe("ОБЯЗАТЕЛЬНОЕ ПОЛЕ - ID пресета"),
+    .int("Preset ID must be an integer")
+    .positive("Preset ID must be positive")
+    .describe("REQUIRED - preset ID"),
 
   framework: z
     .union(
       [z.nativeEnum(FrameworksFrontend), z.nativeEnum(FrameworksBackend)],
       {
         description:
-          "Фреймворк приложения. АВТОМАТИЧЕСКИ определить по структуре проекта, анализируя package.json, конфигурационные файлы и структуру директорий. Если в структуре проекта есть файлы Dockerfile или docker-compose, то это backend приложение с типом docker или docker-compose. Если определить не получается, запросить у пользователя",
+          "Framework. AUTO-DETECT from project structure (package.json, config files, directories). Dockerfile/docker-compose = backend docker. Ask user if unclear.",
       }
     )
     .describe(
-      "ОБЯЗАТЕЛЬНОЕ ПОЛЕ - фреймворк приложения (React, Vue, Angular, Next.js, Django, Express, Laravel, Docker и др.). Если в структуре проекта есть файлы Dockerfile или docker-compose, то это backend приложение с типом docker или docker-compose."
+      "REQUIRED - app framework (React, Vue, Angular, Next.js, Django, Express, Laravel, Docker, etc.). Dockerfile/docker-compose = backend docker/docker-compose."
     )
     .refine((framework) => frameworks.includes(framework), {
       message:
-        "Фреймворк должен быть одним из следующих: " + frameworks.join(", "),
+        "Framework must be one of: " + frameworks.join(", "),
     }),
 
   commit_sha: z
     .string({
       description:
-        "SHA коммита активной удаленной ветки. АВТОМАТИЧЕСКИ достать из .git/refs/remotes/origin/HEAD или соответствующей ветки, НЕ запуская команды в терминале. Должен быть полный SHA (40 символов)",
+        "Commit SHA of active remote branch. AUTO-READ from .git/refs/remotes/origin/<branch>, do NOT run shell commands. Must be full 40-char SHA.",
     })
-    .min(40, "SHA должен быть полный, не сокращенный")
-    .max(40, "SHA должен быть ровно 40 символов")
+    .min(40, "SHA must be full, not abbreviated")
+    .max(40, "SHA must be exactly 40 characters")
     .regex(
       /^[a-f0-9]{40}$/i,
-      "SHA должен содержать только шестнадцатеричные символы (a-f, 0-9)"
+      "SHA must contain only hex characters (a-f, 0-9)"
     )
     .refine((sha) => sha.trim().length === 40, {
-      message: "SHA коммита должен быть ровно 40 символов (не считая пробелы)",
+      message: "SHA must be exactly 40 characters (excluding whitespace)",
     })
-    .describe("ОБЯЗАТЕЛЬНОЕ ПОЛЕ - SHA коммита (40 символов)"),
+    .describe("REQUIRED - commit SHA (40 characters)"),
 
   branch_name: z
     .string({
       description:
-        "Активная ветка. АВТОМАТИЧЕСКИ достать из .git/HEAD, не запуская команды в терминале.",
+        "Active branch. AUTO-READ from .git/HEAD, do NOT run shell commands.",
     })
     .refine((branch) => branch.trim().length > 0, {
-      message: "Некорректное название ветки",
+      message: "Invalid branch name",
     })
-    .describe("ОБЯЗАТЕЛЬНОЕ ПОЛЕ - название ветки"),
+    .describe("REQUIRED - branch name"),
 
   name: z
     .string({
-      description: "Название приложения (2-3 слова).",
+      description: "App name (2-3 words).",
     })
-    .min(3, "Название должно содержать минимум 3 символа")
-    .max(80, "Название слишком длинное (максимум 80 символов)")
+    .min(3, "Name must be at least 3 characters")
+    .max(80, "Name too long (max 80 characters)")
     .regex(
       /^[a-zA-Zа-яА-Я0-9\s\-_]+$/,
-      "Название может содержать только буквы, цифры, пробелы, дефисы и подчеркивания"
+      "Name may only contain letters, digits, spaces, hyphens, and underscores"
     )
-    .describe("ОБЯЗАТЕЛЬНОЕ ПОЛЕ - название приложения"),
+    .describe("REQUIRED - app name"),
 
   build_cmd: z
     .string({
-      description: `Команда для сборки. АВТОМАТИЧЕСКИ определить в зависимости от фреймворка и структуры проекта. МОЖНО использовать ресурс ${ResourceNames.DEPLOY_SETTINGS} для получения настроек по умолчанию для конкретного фреймворка. ОБЯЗАТЕЛЬНО для всех приложений`,
+      description: `Build command. AUTO-DETECT from framework. Use resource ${ResourceNames.DEPLOY_SETTINGS} for defaults.`,
     })
-    .describe("ОБЯЗАТЕЛЬНОЕ ПОЛЕ - команда сборки"),
+    .describe("REQUIRED - build command"),
 
   envs: z
     .record(z.string(), {
       description:
-        "Это критически важная информация, которая влияет на работу приложения. Пользователь должен предоставить все переменные окружения.",
+        "Environment variables. User must provide these -- critical for app operation.",
     })
     .describe(
-      "ОБЯЗАТЕЛЬНОЕ ПОЛЕ - переменные окружения. Пользователь должен указать их самостоятельно"
+      "REQUIRED - environment variables. User must provide them."
     )
     .default({}),
 
   comment: z
     .string({
-      description: "Комментарий к приложению",
+      description: "Optional comment",
     })
-    .max(200, "Комментарий слишком длинный")
+    .max(200, "Comment too long")
     .refine((comment) => comment.trim().length > 0, {
-      message: "Комментарий не может состоять только из пробелов",
+      message: "Comment cannot be only whitespace",
     })
-    .default("Приложение создано через MCP сервер")
-    .describe("НЕ ОБЯЗАТЕЛЬНОЕ ПОЛЕ - комментарий"),
+    .default("Created via MCP server")
+    .describe("OPTIONAL - comment"),
 
   index_dir: z
     .string({
-      description: `Директория с index файлом (ТОЛЬКО для frontend приложений). Использовать ресурс ${ResourceNames.DEPLOY_SETTINGS} для получения настроек по умолчанию для конкретного фреймворка.`,
+      description: `Index directory (frontend only). Use resource ${ResourceNames.DEPLOY_SETTINGS} for defaults.`,
     })
-    .describe("ТОЛЬКО для frontend приложений - директория с index файлом")
+    .describe("Frontend only - index directory")
     .optional(),
 
   run_cmd: z
     .string({
-      description: `Команда для запуска. Использовать ресурс ${ResourceNames.DEPLOY_SETTINGS} для получения настроек по умолчанию для конкретного фреймворка. ОБЯЗАТЕЛЬНО для backend приложений`,
+      description: `Run command. Use resource ${ResourceNames.DEPLOY_SETTINGS} for defaults. Required for backend.`,
     })
-    .describe("ОБЯЗАТЕЛЬНОЕ ПОЛЕ для backend приложений - команда запуска"),
+    .describe("REQUIRED for backend - run command"),
 
   system_dependencies: z
     .array(z.string(), {
       description:
-        "Системные зависимости. АВТОМАТИЧЕСКИ определить по фреймворку и структуре проекта, если нужно.",
+        "System dependencies. AUTO-DETECT from framework if needed.",
     })
-    .describe("НЕ ОБЯЗАТЕЛЬНОЕ ПОЛЕ - системные зависимости (если нужно)")
+    .describe("OPTIONAL - system dependencies (if needed)")
     .default([]),
 
   is_auto_deploy: z
     .literal(false, {
-      description: "ВСЕГДА false при создании через MCP сервер",
+      description: "Always false when creating via MCP server",
     })
     .default(false)
-    .describe("ОБЯЗАТЕЛЬНОЕ ПОЛЕ - всегда false"),
+    .describe("REQUIRED - always false"),
 };
 
 const handler = async (params: CreateAppParams) => {
   try {
     const [providers, presets, deploySettings] = await Promise.all([
-      getVcsProvidersAction(),
-      getAllowedPresetsAction(),
-      getDeploySettingsAction(),
+      appsApiClient.getVcsProviders(),
+      appsApiClient.getAllowedPresets(),
+      appsApiClient.getDeploySettings(),
     ]);
     const repositoryName = params.repository_url
       .split("/")
@@ -184,13 +182,13 @@ const handler = async (params: CreateAppParams) => {
 
     if (!provider) {
       return createToolResponse(
-        `❌ Не удалось найти VCS провайдер для репозитория "${params.repository_url}". Нужно добавить VCS провайдер с помощью tool ${ToolNames.ADD_VCS_PROVIDER}`
+        `❌ VCS provider not found for "${params.repository_url}". Add one via tool ${ToolNames.ADD_VCS_PROVIDER}`
       );
     }
 
     if (!presets) {
       return createToolResponse(
-        `❌ Не удалось получить список пресетов для создания приложения "${params.name}" в Timeweb Cloud`
+        `❌ Failed to fetch presets for app "${params.name}"`
       );
     }
 
@@ -207,70 +205,80 @@ const handler = async (params: CreateAppParams) => {
     }
     if (!preset) {
       return createToolResponse(
-        `❌ Не корректный ID пресета для создания приложения "${params.name}" в Timeweb Cloud. Используйте ресурс ${ResourceNames.ALLOWED_PRESETS}, чтобы получить список доступных пресетов`
+        `❌ Invalid preset ID for app "${params.name}". Use resource ${ResourceNames.ALLOWED_PRESETS} to get available presets`
       );
     }
 
-    const appParams = {
+    const deploySetting = deploySettings?.find(
+      (setting) => setting.framework === params.framework
+    );
+
+    const appData: any = {
       ...params,
       preset_id: preset.id,
       provider_id: provider.provider_id,
     };
 
-    const deploySetting = deploySettings?.find(
-      (setting) => setting.framework === params.framework
-    );
     if (deploySetting) {
-      params.build_cmd = deploySetting.build_cmd;
-      params.run_cmd = deploySetting.run_cmd;
-      params.index_dir = deploySetting.index_dir;
+      appData.build_cmd = deploySetting.build_cmd;
+      if (params.type === AppTypes.FRONTEND) {
+        appData.index_dir = deploySetting.index_dir;
+      } else {
+        appData.run_cmd = deploySetting.run_cmd;
+      }
     }
 
-    const app = await createAppAction(appParams);
+    appData.system_dependencies = params.system_dependencies || [];
+    appData.envs = params.envs || {};
+
+    const app = await appsApiClient.createApp(appData);
 
     if (!app) {
       return createToolResponse(
-        `❌ Не удалось создать приложение "${params.name}" в Timeweb Cloud`
+        `❌ Failed to create app "${params.name}"`
       );
     }
 
-    return createToolResponse(`✅ Приложение "${
-      app.name
-    }" успешно создано в Timeweb Cloud!
+    return createToolResponse(`✅ App "${app.name}" created in Timeweb Cloud!
 
-📋 Детали созданного приложения:
-• Название: ${app.name}
-• Тип: ${app.type}
-• Фреймворк: ${app.framework}
-• Ветка: ${app.branch}
-• IP: ${app.ip}
+Name: ${app.name}
+Type: ${app.type}
+Framework: ${app.framework}
+Branch: ${app.branch}
+IP: ${app.ip}
 ${
   app.domains.length > 0
-    ? `• Приложение будет доступно по адресу: ${app.domains[0].fqdn}`
+    ? `URL: ${app.domains[0].fqdn}`
     : ""
 }
-• Пресет: ${app.preset_id}
+Preset: ${app.preset_id}
 ${
   app.configuration
-    ? `• Конфигурация: ${JSON.stringify(app.configuration)}`
+    ? `Configuration: ${JSON.stringify(app.configuration)}`
     : ""
 }
-ОБЯЗАТЕЛЬНО УВЕДОМИ ПОЛЬЗОВАТЕЛЯ, что перед использованием приложения необходимо вручную настроить переменные окружения в панели управления Timeweb Cloud, так как у чатбота нет доступа к файлу .env вашего проекта.
-🎉 Приложение скоро будет готово к использованию!`);
+NOTE: Configure environment variables in Timeweb Cloud dashboard before use.`);
   } catch (error: unknown) {
     if (error instanceof Error) {
       return createToolResponse(
-        `❌ Ошибка создания приложения. Причина: ${error.message}`
+        `❌ Error creating app: ${error.message}`
       );
     }
-    return createToolResponse(`❌ Неизвестная ошибка при создании приложения`);
+    return createToolResponse(`❌ Unknown error creating app`);
   }
 };
 
-export const createAppTool = {
+export const createAppTool: ToolDefinition = {
   name: ToolNames.CREATE_TIMEWEB_APP,
-  title: "Создание приложения в Timeweb Cloud",
-  description: `Создает приложение в Timeweb Cloud с автоматическим определением параметров проекта.`,
+  title: "Create app in Timeweb Cloud",
+  description: `Creates an app in Timeweb Cloud with auto-detected project parameters.`,
+  annotations: {
+    title: "Create app in Timeweb Cloud",
+    readOnlyHint: false,
+    destructiveHint: false,
+    idempotentHint: false,
+    openWorldHint: true,
+  },
   inputSchema,
   handler,
 };
